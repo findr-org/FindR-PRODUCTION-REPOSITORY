@@ -17,11 +17,7 @@ import uuid
 
 from jose import jwt, JWTError
 from pwdlib import PasswordHash
-
-
-from pwdlib import PasswordHash
 from app.infrastructure.config import settings
-from pydantic import SecretStr
 
 password_hasher = PasswordHash.recommended()
 
@@ -99,7 +95,8 @@ def create_access_token(
 
     expire = datetime.now(timezone.utc) + (
         expires_delta
-        or timedelta(
+        if expires_delta is not None
+        else timedelta(
             minutes=(
                 60 if settings.ENV == "dev" else settings.ACCESS_TOKEN_EXPIRE_MINUTES
             )
@@ -127,24 +124,32 @@ def create_access_token(
 
 
 
-def decode_access_token(access_token : str) -> dict[str, Any]:
+def decode_access_token(access_token: str) -> dict[str, Any]:
+    """Validate an access JWT's signature, expiration and required claims."""
     try:
-        data = jwt.decode(
-            token = access_token,
+        claims = jwt.decode(
+            token=access_token,
+            key=settings.SECRET_KEY.get_secret_value(),
             algorithms=[settings.ALGORITHM],
-            key = settings.SECRET_KEY.get_secret_value()
+            options={
+                "require_exp": True,
+                "require_sub": True,
+                "require_jti": True,
+            },
         )
 
-        return data
-    
-    except JWTError as e :
-        raise JWTError("access token could not be decoded") from e 
-    
+        if (
+            claims.get("token_type") != "access"
+            or not isinstance(claims.get("sub"), str)
+            or not claims["sub"].strip()
+            or not isinstance(claims.get("jti"), str)
+            or not claims["jti"].strip()
+        ):
+            raise JWTError("Invalid access token claims")
 
-
-
-
-
+        return claims
+    except JWTError as exc:
+        raise JWTError("Invalid or expired access token") from exc
 
 
 #======================================#
@@ -179,9 +184,3 @@ def verify_otp(otp_code: str, hashed_otp: str) -> bool:
         hash_otp(otp_code),
         hashed_otp
     )
-
-
-
-
-otp = generate_otp(6)
-print(otp)

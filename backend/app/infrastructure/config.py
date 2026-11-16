@@ -14,7 +14,6 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
 from typing import Literal
 from enum import Enum as PyEnum
-from typing import Literal
 from functools import lru_cache
 from pathlib import Path
 
