@@ -7,10 +7,12 @@ This file is solely responsible for handling and validating
 Application configuration variables
 """
 
+
 from pydantic import Field, field_validator, model_validator
 from urllib.parse import urlsplit
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
+from typing import Literal
 from enum import Enum as PyEnum
 from typing import Literal
 from functools import lru_cache
@@ -67,7 +69,7 @@ class Settings(BaseSettings):
     # ==========================#
     SECRET_KEY: SecretStr = Field(..., min_length=32)
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 5
-    ALGORITHM: str = "HS256"
+    ALGORITHM: Literal["HS256"] = "HS256"
     DEFAULT_SESSION_DAYS: int = Field(default=7, gt=0)
     REMEMBER_ME_SESSION_DAYS: int = Field(default=30, gt=0)
 

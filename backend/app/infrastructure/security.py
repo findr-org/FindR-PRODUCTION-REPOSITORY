@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 import secrets
 import hashlib
 import hmac
+from typing import Any
 import uuid
 
 from jose import jwt, JWTError
@@ -120,4 +121,57 @@ def create_access_token(
         claims=to_encode,
         algorithm=settings.ALGORITHM,
         key=settings.SECRET_KEY.get_secret_value(),
+    )
+
+
+
+
+
+def decode_access_token(access_token : str) -> dict[str, Any]:
+    try:
+        data = jwt.decode(
+            token = access_token,
+            algorithms=settings.ALGORITHM,
+            key = settings.SECRET_KEY.get_secret_value()
+        )
+
+        return data
+    
+    except JWTError as e :
+        raise JWTError("access token could not be decoded") from e 
+    
+
+
+
+
+
+
+
+#============================#
+#OTP hashing and verification
+#============================#
+
+
+def hash_otp(otp_code : str ):
+    """Hash an OTP code with HMAC-SHA256 using the application secret"""
+    
+    digest = hmac.new(
+        settings.SECRET_KEY.get_secret_value().encode("utf-8"),
+        otp_code.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    return f"otp_sha256${digest}"
+
+
+
+def verify_otp(otp_code: str, hashed_otp: str) -> bool:
+    """Verify an OTP using HMAC-SHA256."""
+
+    if not hashed_otp.startswith("otp_sha256$"):
+        return False
+
+    return hmac.compare_digest(
+        hash_otp(otp_code),
+        hashed_otp
     )
