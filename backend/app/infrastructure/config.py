@@ -13,9 +13,10 @@ from typing import Literal
 from functools import lru_cache
 
 from pydantic_settings import SettingsConfigDict, BaseSettings
+from pydantic import SecretStr
 
 
-class Environment(PyEnum, str):
+class Environment(str , PyEnum):
     """Environment Type Enum"""
 
     DEVELOPMENT = "dev"
@@ -62,7 +63,7 @@ class Settings(BaseSettings):
     #==========================#
     #SECURITY TOKEN CONFIGUATION
     #==========================#
-    SECRET_KEY : str = Field(...,min_length = 32)
+    SECRET_KEY : SecretStr = Field(...,min_length = 32)
     ACCESS_TOKEN_EXPIRE_MINUTES : int = 5
     DEFAULT_SESSION_DAYS : int = Field(default = 7 , gt = 0)
     REMEMBER_ME_SESSION_DAYS : int = Field(default = 30 , gt = 0)
@@ -80,4 +81,4 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings():
-    return Settings
+    return Settings()
