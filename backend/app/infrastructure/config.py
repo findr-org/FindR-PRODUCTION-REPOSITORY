@@ -7,7 +7,10 @@ This file is solely responsible for handling and validating
 Application configuration variables
 """
 
-from pydantic import Field
+from pydantic import Field, field_validator, model_validator
+from urllib.parse import urlsplit
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import ArgumentError
 from enum import Enum as PyEnum
 from typing import Literal
 from functools import lru_cache
@@ -55,7 +58,7 @@ class Settings(BaseSettings):
     #REDIS CONFIGURATION
     #==========================#
     REDIS_URL : str | None = None
-    CACHE_ENABLED : bool = True
+    CACHE_ENABLED : bool = False
 
 
 
@@ -75,7 +78,49 @@ class Settings(BaseSettings):
     #CORS CONFIGURATION
     #==========================#
 
-    ALLOWED_ORIGINS: list[str] = Field(default_factory=list)    
+    ALLOWED_ORIGINS: list[str] = Field(default_factory=list)
+
+    @field_validator("PRIMARY_DATABASE_URL", "READ_DATABASE_URL", mode="before")
+    @classmethod
+    def normalize_database_url(cls, value):
+        if value is None or value == "":
+            return None
+
+        try:
+            url = make_url(value)
+        except (ArgumentError, TypeError) as exc:
+            raise ValueError("Invalid PostgreSQL database URL") from exc
+
+        if url.drivername not in ("postgres", "postgresql", "postgresql+asyncpg"):
+            raise ValueError("Only PostgreSQL asyncpg URLs are supported")
+        if not url.host or not url.database:
+            raise ValueError("Database URL must include a host and database")
+
+        return url.set(drivername="postgresql+asyncpg").render_as_string(
+            hide_password=False
+        )
+
+    @field_validator("REDIS_URL")
+    @classmethod
+    def validate_redis_url(cls, value):
+        if value is None or value == "":
+            return None
+
+        try:
+            parsed = urlsplit(value)
+            if parsed.scheme not in ("redis", "rediss") or not parsed.hostname:
+                raise ValueError("Redis URL must use redis:// or rediss:// with a host")
+            _ = parsed.port  # Reject invalid port values.
+        except ValueError as exc:
+            raise ValueError("Invalid Redis URL") from exc
+
+        return value
+
+    @model_validator(mode="after")
+    def validate_cache_config(self):
+        if self.CACHE_ENABLED and not self.REDIS_URL:
+            raise ValueError("REDIS_URL is required when CACHE_ENABLED is True")
+        return self
 
 
 
