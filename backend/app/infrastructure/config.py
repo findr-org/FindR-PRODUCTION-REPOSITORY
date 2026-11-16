@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     # DATABASE CONFIGURATION
     # ==========================#
     PRIMARY_DATABASE_URL: str
-    READ_DATABASE_URL: str
+    READ_DATABASE_URL: str | None = None
 
     DB_POOL_SIZE: int = Field(default=5, ge=1, le=50)
     DB_MAX_OVERFLOW: int = Field(default=5, ge=0, le=100)
