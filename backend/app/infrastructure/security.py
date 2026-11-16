@@ -131,7 +131,7 @@ def decode_access_token(access_token : str) -> dict[str, Any]:
     try:
         data = jwt.decode(
             token = access_token,
-            algorithms=settings.ALGORITHM,
+            algorithms=[settings.ALGORITHM],
             key = settings.SECRET_KEY.get_secret_value()
         )
 
@@ -147,9 +147,13 @@ def decode_access_token(access_token : str) -> dict[str, Any]:
 
 
 
-#============================#
-#OTP hashing and verification
-#============================#
+#======================================#
+#OTP generation hashing and verification
+#=======================================#
+
+
+def generate_otp(length: int) -> str:
+    return f"{secrets.randbelow(10**length):0{length}d}"
 
 
 def hash_otp(otp_code : str ):
@@ -175,3 +179,9 @@ def verify_otp(otp_code: str, hashed_otp: str) -> bool:
         hash_otp(otp_code),
         hashed_otp
     )
+
+
+
+
+otp = generate_otp(6)
+print(otp)
