@@ -7,8 +7,11 @@ requires-python = ">=3.11"
 dependencies = [
     "asyncpg>=0.32.0",
     "fastapi>=0.163.1",
+    "pwdlib[argon2]>=0.4.2",
     "pydantic>=2.14.3",
     "pydantic-settings>=2.16.3",
+    "python-jose[cryptography]>=3.5.0",
     "ruff>=0.17.5",
     "sqlalchemy[asyncio]>=2.1.8",
+    "synk>=0.0.1",
 ]

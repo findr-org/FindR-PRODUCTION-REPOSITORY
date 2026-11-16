@@ -14,12 +14,13 @@ from sqlalchemy.exc import ArgumentError
 from enum import Enum as PyEnum
 from typing import Literal
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import SettingsConfigDict, BaseSettings
 from pydantic import SecretStr
 
 
-class Environment(str , PyEnum):
+class Environment(str, PyEnum):
     """Environment Type Enum"""
 
     DEVELOPMENT = "dev"
@@ -29,7 +30,10 @@ class Environment(str , PyEnum):
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore", case_sensitive=True
+        env_file=Path(__file__).resolve().parents[2] / ".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        case_sensitive=True,
     )
 
     # ==========================#
@@ -52,31 +56,24 @@ class Settings(BaseSettings):
     DB_POOL_TIMEOUT_SECONDS: int = Field(default=10, ge=1, le=120)
     DB_POOL_RECYCLE_SECONDS: int = Field(default=1800, ge=60)
 
+    # ==========================#
+    # REDIS CONFIGURATION
+    # ==========================#
+    REDIS_URL: str | None = None
+    CACHE_ENABLED: bool = False
 
+    # ==========================#
+    # SECURITY TOKEN CONFIGUATION
+    # ==========================#
+    SECRET_KEY: SecretStr = Field(..., min_length=32)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 5
+    ALGORITHM: str = "HS256"
+    DEFAULT_SESSION_DAYS: int = Field(default=7, gt=0)
+    REMEMBER_ME_SESSION_DAYS: int = Field(default=30, gt=0)
 
-    #==========================#
-    #REDIS CONFIGURATION
-    #==========================#
-    REDIS_URL : str | None = None
-    CACHE_ENABLED : bool = False
-
-
-
-
-    #==========================#
-    #SECURITY TOKEN CONFIGUATION
-    #==========================#
-    SECRET_KEY : SecretStr = Field(...,min_length = 32)
-    ACCESS_TOKEN_EXPIRE_MINUTES : int = 5
-    DEFAULT_SESSION_DAYS : int = Field(default = 7 , gt = 0)
-    REMEMBER_ME_SESSION_DAYS : int = Field(default = 30 , gt = 0)
-
-
-
-
-    #==========================#
-    #CORS CONFIGURATION
-    #==========================#
+    # ==========================#
+    # CORS CONFIGURATION
+    # ==========================#
 
     ALLOWED_ORIGINS: list[str] = Field(default_factory=list)
 
@@ -123,7 +120,9 @@ class Settings(BaseSettings):
         return self
 
 
-
 @lru_cache
-def get_settings():
-    return Settings()
+def get_settings() -> Settings:
+    return Settings()  # pyright: ignore[reportCallIssue]
+
+
+settings = get_settings()
