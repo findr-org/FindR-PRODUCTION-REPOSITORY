@@ -7,7 +7,6 @@ This file is solely responsible for handling and validating
 Application configuration variables
 """
 
-
 from pydantic import Field, field_validator, model_validator
 from urllib.parse import urlsplit
 from sqlalchemy.engine import make_url

@@ -121,9 +121,6 @@ def create_access_token(
     )
 
 
-
-
-
 def decode_access_token(access_token: str) -> dict[str, Any]:
     """Validate an access JWT's signature, expiration and required claims."""
     try:
@@ -152,18 +149,18 @@ def decode_access_token(access_token: str) -> dict[str, Any]:
         raise JWTError("Invalid or expired access token") from exc
 
 
-#======================================#
-#OTP generation hashing and verification
-#=======================================#
+# ======================================#
+# OTP generation hashing and verification
+# =======================================#
 
 
 def generate_otp(length: int) -> str:
     return f"{secrets.randbelow(10**length):0{length}d}"
 
 
-def hash_otp(otp_code : str ):
+def hash_otp(otp_code: str):
     """Hash an OTP code with HMAC-SHA256 using the application secret"""
-    
+
     digest = hmac.new(
         settings.SECRET_KEY.get_secret_value().encode("utf-8"),
         otp_code.encode("utf-8"),
@@ -173,14 +170,10 @@ def hash_otp(otp_code : str ):
     return f"otp_sha256${digest}"
 
 
-
 def verify_otp(otp_code: str, hashed_otp: str) -> bool:
     """Verify an OTP using HMAC-SHA256."""
 
     if not hashed_otp.startswith("otp_sha256$"):
         return False
 
-    return hmac.compare_digest(
-        hash_otp(otp_code),
-        hashed_otp
-    )
+    return hmac.compare_digest(hash_otp(otp_code), hashed_otp)
